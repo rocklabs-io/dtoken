@@ -1,0 +1,7 @@
+{
+  "canisters": {
+    "registry": {
+      "main": "src/registry.mo"
+    }
+  }
+}
