@@ -2,6 +2,30 @@
   "canisters": {
     "registry": {
       "main": "src/registry.mo"
+    },
+	"frontend": {
+	  "dependencies": [ "registry" ],
+	  "frontend": { 
+		"entrypoint": "src/public/Home.jsx"
+	  },
+	  "source": [
+		  "src/public",
+		  "dist/frontend"
+	  ],
+	  "type": "assets"
+	}
+  },
+  "defaults": {
+    "build": {
+      "packtool": ""
     }
-  }
+  },
+  "dfx": "0.6.25",
+  "networks": {
+    "local": {
+      "bind": "127.0.0.1:8000",
+      "type": "ephemeral"
+    }
+  },
+  "version": 1
 }
