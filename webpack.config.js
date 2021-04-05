@@ -85,6 +85,9 @@ function generateWebpackConfigForCanister(name, info) {
      ]
     },
     plugins: [
+      // new webpack.ProvidePlugin({
+      //   ic: [path.resolve(path.join(__dirname, 'agent.js')), 'ic'],
+      // }),
     ],
   };
 }

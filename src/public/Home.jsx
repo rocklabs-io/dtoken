@@ -20,6 +20,12 @@ import './home.css';
 import Post from "./Post.jsx"
 
 
+if (!(window).ic) {
+  const { HttpAgent, IDL } = require("@dfinity/agent");
+  const createAgent = require("./createAgent").default;
+  (window).ic = { agent: createAgent(), HttpAgent, IDL };
+}
+
 export default class Home extends React.Component {
   constructor(props) {
     super(props);
@@ -119,7 +125,7 @@ export default class Home extends React.Component {
     const { Search } = Input;
 
     return (
-        <>
+        <div>
             <Row>
                 <Col span={24}>
                     <h2>
@@ -143,7 +149,7 @@ export default class Home extends React.Component {
             </Row>
             <Post post_visible = {this.state.post_visible} ></Post>
             {/* <Update update_visible = {this.state.update_visible} ></Update> */}
-        </> 
+        </div> 
     );
   }
 }
