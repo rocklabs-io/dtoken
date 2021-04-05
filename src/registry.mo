@@ -16,7 +16,7 @@ shared(msg) actor class TokenRegistry() {
 		owner: Principal;
 		canisterId: Principal;
 	};
-	private stable var numTokens: Nat = 0;
+	private var numTokens: Nat = 0;
 	private var tokens = HashMap.HashMap<Nat, TokenInfo>(0, Nat.equal, Hash.hash);
 	private var cid2Token = HashMap.HashMap<Principal, TokenInfo>(0, Principal.equal, Principal.hash);
 

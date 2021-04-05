@@ -24,6 +24,8 @@ if (!(window).ic) {
   const { HttpAgent, IDL } = require("@dfinity/agent");
   const createAgent = require("./createAgent").default;
   (window).ic = { agent: createAgent(), HttpAgent, IDL };
+} else {
+  console.log("window.ic:", window.ic);
 }
 
 export default class Home extends React.Component {
