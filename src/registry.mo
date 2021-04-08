@@ -46,6 +46,16 @@ shared(msg) actor class TokenRegistry() {
 		tokenList
 	};
 
+	public query func getUserTokenList(user: Principal): async [TokenInfo] {
+		var tokenList: [TokenInfo] = [];
+		for((id, token) in tokens.entries()) {
+			if(token.owner == user) {
+				tokenList := Array.append<TokenInfo>(tokenList, [token]);
+			};
+		};
+		tokenList
+	};
+
 	// public query func getTokenCID(id: Nat): async ?Principal {
 	// 	switch(tokens.get(id)) {
 	// 		case(?info) {
