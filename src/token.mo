@@ -18,6 +18,9 @@ shared(msg) actor class Token(_name: Text, _symbol: Text, _decimals: Nat, _total
             case (?from_balance) {
                 if (from_balance >= value) {
                     var from_balance_new = from_balance - value;
+                    assert(from_balance_new <= from_balance);
+                    balances.put(msg.caller, from_balance_new);
+
                     var to_balance_new = switch (balances.get(to)) {
                         case (?to_balance) {
                             to_balance + value;
@@ -26,9 +29,7 @@ shared(msg) actor class Token(_name: Text, _symbol: Text, _decimals: Nat, _total
                             value;
                         };
                     };
-                    assert(from_balance_new <= from_balance);
                     assert(to_balance_new >= value);
-                    balances.put(msg.caller, from_balance_new);
                     balances.put(to, to_balance_new);
                     return true;
                 } else {
@@ -48,7 +49,9 @@ shared(msg) actor class Token(_name: Text, _symbol: Text, _decimals: Nat, _total
                     case (?allowance) {
                         if (from_balance >= value and allowance >= value) {
                             var from_balance_new = from_balance - value;
-                            var allowance_new = allowance - value;
+                            assert(from_balance_new <= from_balance);
+                            balances.put(from, from_balance_new);
+
                             var to_balance_new = switch (balances.get(to)) {
                                 case (?to_balance) {
                                    to_balance + value;
@@ -57,12 +60,13 @@ shared(msg) actor class Token(_name: Text, _symbol: Text, _decimals: Nat, _total
                                     value;
                                 };
                             };
-                            assert(from_balance_new <= from_balance);
                             assert(to_balance_new >= value);
+                            balances.put(to, to_balance_new);
+
+                            var allowance_new = allowance - value;
+                            assert(allowance_new <= value);
                             allowance_from.put(msg.caller, allowance_new);
                             allowances.put(from, allowance_from);
-                            balances.put(from, from_balance_new);
-                            balances.put(to, to_balance_new);
                             return true;                            
                         } else {
                             return false;
