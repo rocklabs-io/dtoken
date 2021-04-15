@@ -64,7 +64,7 @@ shared(msg) actor class Token(_name: Text, _symbol: Text, _decimals: Nat, _total
                             balances.put(to, to_balance_new);
 
                             var allowance_new = allowance - value;
-                            assert(allowance_new <= value);
+                            assert(allowance_new <= allowance);
                             allowance_from.put(msg.caller, allowance_new);
                             allowances.put(from, allowance_from);
                             return true;                            
