@@ -2,18 +2,7 @@
   "canisters": {
     "registry": {
       "main": "src/registry.mo"
-    },
-	"frontend": {
-	  "dependencies": [ "registry" ],
-	  "frontend": { 
-		"entrypoint": "src/public/Home.jsx"
-	  },
-	  "source": [
-		  "src/public",
-		  "dist/frontend"
-	  ],
-	  "type": "assets"
-	}
+    }
   },
   "defaults": {
     "build": {
