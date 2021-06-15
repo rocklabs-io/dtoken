@@ -3,6 +3,7 @@ import Array "mo:base/Array";
 import Nat "mo:base/Nat";
 import Hash "mo:base/Hash";
 import Principal "mo:base/Principal";
+import Cycles = "mo:base/ExperimentalCycles";
 import Token "./token";
 
 shared(msg) actor class TokenRegistry() {
@@ -21,6 +22,7 @@ shared(msg) actor class TokenRegistry() {
 	private var cid2Token = HashMap.HashMap<Principal, TokenInfo>(0, Principal.equal, Principal.hash);
 
 	public shared(msg) func createToken(name: Text, symbol: Text, decimals: Nat, totalSupply: Nat): async Principal {
+		Cycles.add(2000000000000);
 		let token = await Token.Token(name, symbol, decimals, totalSupply, msg.caller);
 		let cid = Principal.fromActor(token);
 		let info: TokenInfo = {
