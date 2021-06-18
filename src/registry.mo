@@ -5,7 +5,7 @@ import Hash "mo:base/Hash";
 import Error "mo:base/Error";
 import Principal "mo:base/Principal";
 import Cycles = "mo:base/ExperimentalCycles";
-import Token "./token/src/token";
+import Token "./ic-token/erc20/src/token";
 
 shared(msg) actor class TokenRegistry() {
 	

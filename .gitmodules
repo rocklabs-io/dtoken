@@ -1,4 +1,4 @@
-[submodule "src/token"]
-	path = src/token
-	url = https://github.com/dfinance-tech/motoko-token
-	branch = dev
+[submodule "src/ic-token"]
+	path = src/ic-token
+	url = https://github.com/dfinance-tech/ic-token
+	branch = main
