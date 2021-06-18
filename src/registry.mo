@@ -73,7 +73,7 @@ shared(msg) actor class TokenRegistry() {
 
 	public shared(msg) func setCyclesPerToken(n: Nat) {
 		assert(msg.caller == _owner);
-		cyclesPerToken = n;
+		cyclesPerToken := n;
 	};
 
 	public shared(msg) func setOwner(newOwner: Principal) {
