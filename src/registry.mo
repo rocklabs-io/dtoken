@@ -20,6 +20,7 @@ shared(msg) actor class TokenRegistry() {
 	};
 	private stable var _owner: Principal = msg.caller;
 	private stable var numTokens: Nat = 0;
+	private stable var cyclesPerToken: Nat = 2000000000000; // 2 trillion cycles for each token canister
 	private stable var maxNumTokens: Nat = 500;
 	private stable var maxNumTokensPerId: Nat = 1;
 	// TODO: make this upgradable
@@ -41,7 +42,7 @@ shared(msg) actor class TokenRegistry() {
 			};
 			case (_) {};
 		};
-		Cycles.add(2000000000000);
+		Cycles.add(cyclesPerToken);
 		let token = await Token.Token(name, symbol, decimals, totalSupply, msg.caller);
 		let cid = Principal.fromActor(token);
 		let info: TokenInfo = {
@@ -68,6 +69,11 @@ shared(msg) actor class TokenRegistry() {
 	public shared(msg) func setMaxTokenNumberPerUser(n: Nat) {
 		assert(msg.caller == _owner);
 		maxNumTokensPerId := n;
+	};
+
+	public shared(msg) func setCyclesPerToken(n: Nat) {
+		assert(msg.caller == _owner);
+		cyclesPerToken = n;
 	};
 
 	public shared(msg) func setOwner(newOwner: Principal) {
