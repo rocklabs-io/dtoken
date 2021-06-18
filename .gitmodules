@@ -1,0 +1,4 @@
+[submodule "src/token"]
+	path = src/token
+	url = https://github.com/dfinance-tech/motoko-token
+	branch = dev

@@ -5,7 +5,7 @@ import Hash "mo:base/Hash";
 import Error "mo:base/Error";
 import Principal "mo:base/Principal";
 import Cycles = "mo:base/ExperimentalCycles";
-import Token "./token";
+import Token "./token/src/token";
 
 shared(msg) actor class TokenRegistry() {
 	
@@ -13,8 +13,8 @@ shared(msg) actor class TokenRegistry() {
 		id: Nat;
 		name: Text;
 		symbol: Text;
-		decimals: Nat;
-		totalSupply: Nat;
+		decimals: Nat64;
+		totalSupply: Nat64;
 		owner: Principal;
 		canisterId: Principal;
 	};
@@ -28,7 +28,7 @@ shared(msg) actor class TokenRegistry() {
 	private var cid2Token = HashMap.HashMap<Principal, TokenInfo>(0, Principal.equal, Principal.hash);
 	private var userTokenNum = HashMap.HashMap<Principal, Nat>(0, Principal.equal, Principal.hash);
 
-	public shared(msg) func createToken(name: Text, symbol: Text, decimals: Nat, totalSupply: Nat): async Principal {
+	public shared(msg) func createToken(name: Text, symbol: Text, decimals: Nat64, totalSupply: Nat64): async Principal {
 		if(numTokens >= maxNumTokens) {
 			throw Error.reject("Exceeds max number of tokens");
 		};
