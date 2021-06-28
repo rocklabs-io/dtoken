@@ -36,6 +36,46 @@ shared(msg) actor class TokenRegistry() {
 	private var cid2Token = HashMap.HashMap<Principal, TokenInfo>(0, Principal.equal, Principal.hash);
 	private var userTokenNum = HashMap.HashMap<Principal, Nat>(0, Principal.equal, Principal.hash);
 
+	type CanisterSettings = {
+        controllers : ?[Principal];
+        compute_allocation : ?Nat;
+        memory_allocation : ?Nat;
+        freezing_threshold : ?Nat;
+    };
+	type CanisterId = {
+        canister_id: Principal;
+    };
+    type InstallMode = {
+        #install;
+        #reinstall;
+        #upgrade;
+    };
+    type InstallCodeParams = {
+        mode: InstallMode;
+        canister_id: Principal;
+        wasm_module: Blob;
+        arg: Blob;
+    };
+    type Status = {
+        #running;
+        #stopping;
+        #stopped;
+    };
+    type CanisterStatus = {
+        status: Status;
+        settings: CanisterSettings;
+        module_hash: ?Blob;
+        memory_size: Nat;
+        cycles: Nat;
+    };
+    public type ICActor = actor {
+        create_canister: shared(settings: ?CanisterSettings) -> async CanisterId;
+        update_settings: shared(canister_id: Principal, settings: CanisterSettings) -> async ();
+        install_code: shared(params: InstallCodeParams) -> async ();
+        canister_status: query(canister_id: CanisterId) -> async CanisterStatus;
+    };
+    let IC: ICActor = actor("aaaaa-aa");
+
 	public shared(msg) func createToken(name: Text, symbol: Text, decimals: Nat64, totalSupply: Nat64): async Principal {
 		if(numTokens >= maxNumTokens) {
 			throw Error.reject("Exceeds max number of tokens");
@@ -67,6 +107,24 @@ shared(msg) actor class TokenRegistry() {
 		numTokens += 1;
 		userTokenNum.put(msg.caller, userTokenCount + 1);
 		return cid;
+	};
+
+	public shared(msg) func setController(canisterId: Principal): async Bool {
+		switch(cid2Token.get(canisterId)) {
+			case(?info) {
+				assert(msg.caller == info.owner);
+				let controllers: ?[Principal] = ?[msg.caller];
+				let settings: CanisterSettings = {
+					controllers = controllers;
+					compute_allocation = null;
+					memory_allocation = null;
+					freezing_threshold = null;
+				};
+				await IC.update_settings(canisterId, settings);
+				return true;
+			};
+			case(_) { return false };
+		}
 	};
 
 	public shared(msg) func setMaxTokenNumber(n: Nat) {
