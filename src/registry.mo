@@ -12,13 +12,14 @@ import Nat "mo:base/Nat";
 import Hash "mo:base/Hash";
 import Error "mo:base/Error";
 import Principal "mo:base/Principal";
+import Iter "mo:base/Iter";
 import Cycles = "mo:base/ExperimentalCycles";
 import Token "./ic-token/erc20/src/token";
 
 shared(msg) actor class TokenRegistry() {
 	
 	public type TokenInfo = {
-		id: Nat;
+		index: Nat;
 		name: Text;
 		symbol: Text;
 		decimals: Nat64;
@@ -31,9 +32,10 @@ shared(msg) actor class TokenRegistry() {
 	private stable var cyclesPerToken: Nat = 2000000000000; // 2 trillion cycles for each token canister
 	private stable var maxNumTokens: Nat = 500;
 	private stable var maxNumTokensPerId: Nat = 1;
-	// TODO: make this upgradable
-	private var tokens = HashMap.HashMap<Nat, TokenInfo>(0, Nat.equal, Hash.hash);
-	private var cid2Token = HashMap.HashMap<Principal, TokenInfo>(0, Principal.equal, Principal.hash);
+
+	private stable var tokenEntries : [(Principal, TokenInfo)] = [];
+    private stable var userTokenNumEntries : [(Principal, Nat)] = [];
+	private var tokens = HashMap.HashMap<Principal, TokenInfo>(0, Principal.equal, Principal.hash);
 	private var userTokenNum = HashMap.HashMap<Principal, Nat>(0, Principal.equal, Principal.hash);
 
 	type CanisterSettings = {
@@ -76,6 +78,19 @@ shared(msg) actor class TokenRegistry() {
     };
     let IC: ICActor = actor("aaaaa-aa");
 
+
+	system func preupgrade() {
+        tokenEntries := Iter.toArray(tokens.entries());
+		userTokenNumEntries := Iter.toArray(userTokenNum.entries());
+    };
+
+    system func postupgrade() {
+        tokens := HashMap.fromIter<Principal, TokenInfo>(tokenEntries.vals(), 1, Principal.equal, Principal.hash);
+        tokenEntries := [];
+        userTokenNum := HashMap.fromIter<Principal, Nat>(userTokenNumEntries.vals(), 1, Principal.equal, Principal.hash);
+        userTokenNumEntries := [];
+    };
+
 	public shared(msg) func createToken(name: Text, symbol: Text, decimals: Nat64, totalSupply: Nat64): async Principal {
 		if(numTokens >= maxNumTokens) {
 			throw Error.reject("Exceeds max number of tokens");
@@ -94,7 +109,7 @@ shared(msg) actor class TokenRegistry() {
 		let token = await Token.Token(name, symbol, decimals, totalSupply, msg.caller);
 		let cid = Principal.fromActor(token);
 		let info: TokenInfo = {
-			id = numTokens;
+			index = numTokens;
 			name = name;
 			symbol = symbol;
 			decimals = decimals;
@@ -102,15 +117,14 @@ shared(msg) actor class TokenRegistry() {
 			owner = msg.caller;
 			canisterId = cid;
 		};
-		tokens.put(numTokens, info);
-		cid2Token.put(cid, info);
+		tokens.put(cid, info);
 		numTokens += 1;
 		userTokenNum.put(msg.caller, userTokenCount + 1);
 		return cid;
 	};
 
 	public shared(msg) func setController(canisterId: Principal): async Bool {
-		switch(cid2Token.get(canisterId)) {
+		switch(tokens.get(canisterId)) {
 			case(?info) {
 				assert(msg.caller == info.owner);
 				let controllers: ?[Principal] = ?[msg.caller];
@@ -172,7 +186,7 @@ shared(msg) actor class TokenRegistry() {
 
 	public query func getTokenList(): async [TokenInfo] {
 		var tokenList: [TokenInfo] = [];
-		for((id, token) in tokens.entries()) {
+		for((index, token) in tokens.entries()) {
 			tokenList := Array.append<TokenInfo>(tokenList, [token]);
 		};
 		tokenList
@@ -180,7 +194,7 @@ shared(msg) actor class TokenRegistry() {
 
 	public query func getUserTokenList(user: Principal): async [TokenInfo] {
 		var tokenList: [TokenInfo] = [];
-		for((id, token) in tokens.entries()) {
+		for((index, token) in tokens.entries()) {
 			if(token.owner == user) {
 				tokenList := Array.append<TokenInfo>(tokenList, [token]);
 			};
@@ -197,11 +211,11 @@ shared(msg) actor class TokenRegistry() {
 	// 	}
 	// };
 
-	public query func getTokenInfoById(id: Nat): async ?TokenInfo {
-		tokens.get(id)
-	};
+	// public query func getTokenInfoById(id: Nat): async ?TokenInfo {
+	// 	tokens.get(id)
+	// };
 
-	public query func getTokenInfoByCID(cid: Principal): async ?TokenInfo {
-		cid2Token.get(cid)
+	public query func getTokenInfo(cid: Principal): async ?TokenInfo {
+		tokens.get(cid)
 	};
 };
