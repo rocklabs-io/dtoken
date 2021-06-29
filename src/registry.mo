@@ -16,7 +16,7 @@ import Iter "mo:base/Iter";
 import Cycles = "mo:base/ExperimentalCycles";
 import Token "./ic-token/erc20/src/token";
 
-shared(msg) actor class TokenRegistry() {
+shared(msg) actor class TokenRegistry() = this {
 	
 	public type TokenInfo = {
 		index: Nat;
@@ -139,7 +139,7 @@ shared(msg) actor class TokenRegistry() {
 		switch(tokens.get(canisterId)) {
 			case(?info) {
 				assert(msg.caller == info.owner);
-				let controllers: ?[Principal] = ?[msg.caller];
+				let controllers: ?[Principal] = ?[msg.caller, Principal.fromActor(this)];
 				let settings: CanisterSettings = {
 					controllers = controllers;
 					compute_allocation = null;
