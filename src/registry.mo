@@ -38,6 +38,15 @@ shared(msg) actor class TokenRegistry() {
 	private var tokens = HashMap.HashMap<Principal, TokenInfo>(0, Principal.equal, Principal.hash);
 	private var userTokenNum = HashMap.HashMap<Principal, Nat>(0, Principal.equal, Principal.hash);
 
+	public type Stats = {
+		owner: Principal;
+		numTokens: Nat;
+		cyclesPerToken: Nat;
+		maxNumTokens: Nat;
+		maxNumTokensPerId: Nat;
+		cycles: Nat;
+	};
+
 	type CanisterSettings = {
         controllers : ?[Principal];
         compute_allocation : ?Nat;
@@ -58,6 +67,10 @@ shared(msg) actor class TokenRegistry() {
         wasm_module: Blob;
         arg: Blob;
     };
+	type UpdateSettingsParams = {
+		canister_id: Principal;
+		settings: CanisterSettings;
+	};
     type Status = {
         #running;
         #stopping;
@@ -72,12 +85,11 @@ shared(msg) actor class TokenRegistry() {
     };
     public type ICActor = actor {
         create_canister: shared(settings: ?CanisterSettings) -> async CanisterId;
-        update_settings: shared(canister_id: Principal, settings: CanisterSettings) -> async ();
+        update_settings: shared(params: UpdateSettingsParams) -> async ();
         install_code: shared(params: InstallCodeParams) -> async ();
         canister_status: query(canister_id: CanisterId) -> async CanisterStatus;
     };
     let IC: ICActor = actor("aaaaa-aa");
-
 
 	system func preupgrade() {
         tokenEntries := Iter.toArray(tokens.entries());
@@ -134,12 +146,29 @@ shared(msg) actor class TokenRegistry() {
 					memory_allocation = null;
 					freezing_threshold = null;
 				};
-				await IC.update_settings(canisterId, settings);
+				let params: UpdateSettingsParams = {
+					canister_id = canisterId;
+					settings = settings;
+				};
+				await IC.update_settings(params);
 				return true;
 			};
 			case(_) { return false };
 		}
 	};
+
+	public shared(msg) func getTokenCanisterStatus(canister_id: Principal): async ?CanisterStatus {
+		switch(tokens.get(canister_id)) {
+			case(?info) {
+				let param: CanisterId = {
+					canister_id = canister_id;
+				};
+				let status = await IC.canister_status(param);
+				return ?status;
+			};
+			case(_) {return null};
+		}
+    };
 
 	public shared(msg) func setMaxTokenNumber(n: Nat) {
 		assert(msg.caller == _owner);
@@ -175,6 +204,17 @@ shared(msg) actor class TokenRegistry() {
 
 	public query func getMaxTokenNumberPerUser(): async Nat {
 		return maxNumTokensPerId;
+	};
+
+	public query func getStats(): async Stats {
+		return {
+			owner = _owner;
+			numTokens = numTokens;
+			cyclesPerToken = cyclesPerToken;
+			maxNumTokens = maxNumTokens;
+			maxNumTokensPerId = maxNumTokensPerId;
+			cycles = Cycles.balance();
+		};
 	};
 
 	public query func getUserTokenNumber(id: Principal): async Nat {
