@@ -16,7 +16,7 @@ import Iter "mo:base/Iter";
 import Cycles = "mo:base/ExperimentalCycles";
 import Token "./ic-token/motoko/erc20-simple-storage/src/token";
 
-shared(msg) actor class TokenRegistry() = this {
+shared(msg) actor class TokenRegistry(_feeTokenId: Principal, _fee: Nat) = this {
     
     public type TokenInfo = {
         index: Nat;
@@ -27,11 +27,24 @@ shared(msg) actor class TokenRegistry() = this {
         owner: Principal;
         canisterId: Principal;
     };
+    public type TokenActor = actor {
+        allowance: shared (owner: Principal, spender: Principal) -> async Nat;
+        approve: shared (spender: Principal, value: Nat) -> async Bool;
+        balanceOf: (owner: Principal) -> async Nat;
+        decimals: () -> async Nat;
+        name: () -> async Text;
+        symbol: () -> async Text;
+        totalSupply: () -> async Nat;
+        transfer: shared (to: Principal, value: Nat) -> async Bool;
+        transferFrom: shared (from: Principal, to: Principal, value: Nat) -> async Bool;
+    };
     private stable var _owner: Principal = msg.caller;
     private stable var numTokens: Nat = 0;
     private stable var cyclesPerToken: Nat = 2000000000000; // 2 trillion cycles for each token canister
-    private stable var maxNumTokens: Nat = 500;
+    private stable var maxNumTokens: Nat = 100;
     private stable var maxNumTokensPerId: Nat = 1;
+    private stable var feeTokenId: Principal = _feeTokenId;
+    private stable var fee: Nat = _fee;
 
     private stable var tokenEntries : [(Principal, TokenInfo)] = [];
     private stable var userTokenNumEntries : [(Principal, Nat)] = [];
@@ -117,6 +130,10 @@ shared(msg) actor class TokenRegistry() = this {
             };
             case (_) {};
         };
+        // charge fee
+        let feeToken: TokenActor = actor(Principal.toText(feeTokenId));
+        assert(await feeToken.transferFrom(msg.caller, Principal.fromActor(this), fee));
+        // create token canister
         Cycles.add(cyclesPerToken);
         let token = await Token.Token(name, symbol, decimals, totalSupply, msg.caller);
         let cid = Principal.fromActor(token);
