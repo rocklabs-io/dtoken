@@ -14,7 +14,7 @@ import Error "mo:base/Error";
 import Principal "mo:base/Principal";
 import Iter "mo:base/Iter";
 import Cycles = "mo:base/ExperimentalCycles";
-import Token "./ic-token/erc20/src/token";
+import Token "./ic-token/motoko/erc20-simple-storage/src/token";
 
 shared(msg) actor class TokenRegistry() = this {
     
@@ -22,8 +22,8 @@ shared(msg) actor class TokenRegistry() = this {
         index: Nat;
         name: Text;
         symbol: Text;
-        decimals: Nat64;
-        totalSupply: Nat64;
+        decimals: Nat;
+        totalSupply: Nat;
         owner: Principal;
         canisterId: Principal;
     };
@@ -103,7 +103,7 @@ shared(msg) actor class TokenRegistry() = this {
         userTokenNumEntries := [];
     };
 
-    public shared(msg) func createToken(name: Text, symbol: Text, decimals: Nat64, totalSupply: Nat64): async Principal {
+    public shared(msg) func createToken(name: Text, symbol: Text, decimals: Nat, totalSupply: Nat): async Principal {
         if(numTokens >= maxNumTokens) {
             throw Error.reject("Exceeds max number of tokens");
         };
