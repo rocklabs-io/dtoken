@@ -42,7 +42,7 @@ shared(msg) actor class TokenRegistry(_feeTokenId: Principal, _fee: Nat) = this 
     private stable var numTokens: Nat = 0;
     private stable var cyclesPerToken: Nat = 2000000000000; // 2 trillion cycles for each token canister
     private stable var maxNumTokens: Nat = 100;
-    private stable var maxNumTokensPerId: Nat = 1;
+    private stable var maxNumTokensPerId: Nat = 2;
     private stable var feeTokenId: Principal = _feeTokenId;
     private stable var fee: Nat = _fee;
 
@@ -205,6 +205,11 @@ shared(msg) actor class TokenRegistry(_feeTokenId: Principal, _fee: Nat) = this 
     public shared(msg) func setOwner(newOwner: Principal) {
         assert(msg.caller == _owner);
         _owner := newOwner;
+    };
+
+    public shared(msg) func removeToken(id: Principal) {
+        assert(msg.caller == _owner);
+        tokens.delete(id);
     };
 
     public query func getCyclesBalance(): async Nat {
