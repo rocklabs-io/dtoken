@@ -13,6 +13,7 @@ import Hash "mo:base/Hash";
 import Error "mo:base/Error";
 import Principal "mo:base/Principal";
 import Iter "mo:base/Iter";
+import Time "mo:base/Time";
 import Cycles = "mo:base/ExperimentalCycles";
 import Token "./ic-token/motoko/erc20-simple-storage/src/token";
 
@@ -26,6 +27,7 @@ shared(msg) actor class TokenRegistry(_feeTokenId: Principal, _fee: Nat) = this 
         totalSupply: Nat;
         owner: Principal;
         canisterId: Principal;
+        timestamp: Int;
     };
     public type TokenActor = actor {
         allowance: shared (owner: Principal, spender: Principal) -> async Nat;
@@ -145,6 +147,7 @@ shared(msg) actor class TokenRegistry(_feeTokenId: Principal, _fee: Nat) = this 
             totalSupply = totalSupply;
             owner = msg.caller;
             canisterId = cid;
+            timestamp = Time.now();
         };
         tokens.put(cid, info);
         numTokens += 1;
@@ -185,6 +188,12 @@ shared(msg) actor class TokenRegistry(_feeTokenId: Principal, _fee: Nat) = this 
             };
             case(_) {return null};
         }
+    };
+
+    public shared(msg) func modifyTokenInfo(info: TokenInfo): async Bool {
+        assert(msg.caller == _owner);
+        tokens.put(info.canisterId, info);
+        return true;
     };
 
     public shared(msg) func setMaxTokenNumber(n: Nat) {
@@ -248,7 +257,7 @@ shared(msg) actor class TokenRegistry(_feeTokenId: Principal, _fee: Nat) = this 
 
     public query func getTokenList(): async [TokenInfo] {
         var tokenList: [TokenInfo] = [];
-        for((index, token) in tokens.entries()) {
+        for((id, token) in tokens.entries()) {
             tokenList := Array.append<TokenInfo>(tokenList, [token]);
         };
         tokenList
@@ -281,3 +290,6 @@ shared(msg) actor class TokenRegistry(_feeTokenId: Principal, _fee: Nat) = this 
         tokens.get(cid)
     };
 };
+
+
+//  dfx canister --network ic call registry modifyTokenInfo 'record { decimals = 8 : nat; owner = principal "4qehi-lqyo6-afz4c-hwqwo-lubfi-4evgk-5vrn5-rldx2-lheha-xs7a4-gae"; name = "Wrapped ICP(Test)"; totalSupply = 10_000_000_000_000_000 : nat; index = 0 : nat; symbol = "WICPT"; canisterId = principal "lx4mp-oyaaa-aaaah-qae3a-cai"; timestamp = 1_627_029_924_796_926_736 : int;}'
