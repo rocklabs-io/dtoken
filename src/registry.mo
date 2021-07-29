@@ -196,6 +196,12 @@ shared(msg) actor class TokenRegistry(_feeTokenId: Principal, _fee: Nat) = this 
         return true;
     };
 
+    public shared(msg) func setNumTokens(n: Nat): async Bool {
+        assert(msg.caller == _owner);
+        numTokens := n;
+        return true;
+    };
+
     public shared(msg) func setMaxTokenNumber(n: Nat) {
         assert(msg.caller == _owner);
         maxNumTokens := n;
