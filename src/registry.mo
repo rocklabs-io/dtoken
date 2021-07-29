@@ -190,6 +190,13 @@ shared(msg) actor class TokenRegistry(_feeTokenId: Principal, _fee: Nat) = this 
         }
     };
 
+    public shared(msg) func claimFee(): async Bool {
+        assert(msg.caller == _owner);
+        let feeToken: TokenActor = actor(Principal.toText(feeTokenId));
+        let balance: Nat = await feeToken.balanceOf(Principal.fromActor(this));
+        return await feeToken.transfer(msg.caller, balance);
+    };
+
     public shared(msg) func modifyTokenInfo(info: TokenInfo): async Bool {
         assert(msg.caller == _owner);
         tokens.put(info.canisterId, info);
