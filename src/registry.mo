@@ -60,6 +60,8 @@ shared(msg) actor class TokenRegistry(_feeTokenId: Principal, _fee: Nat) = this 
         maxNumTokens: Nat;
         maxNumTokensPerId: Nat;
         cycles: Nat;
+        feeTokenId: Principal;
+        fee: Nat;
     };
 
     type CanisterSettings = {
@@ -258,6 +260,8 @@ shared(msg) actor class TokenRegistry(_feeTokenId: Principal, _fee: Nat) = this 
             maxNumTokens = maxNumTokens;
             maxNumTokensPerId = maxNumTokensPerId;
             cycles = Cycles.balance();
+            feeTokenId = feeTokenId;
+            fee = fee;
         };
     };
 
