@@ -21,6 +21,7 @@ shared(msg) actor class TokenRegistry(_feeTokenId: Principal, _fee: Nat) = this 
     
     public type TokenInfo = {
         index: Nat;
+        logo: Text;
         name: Text;
         symbol: Text;
         decimals: Nat;
@@ -120,7 +121,7 @@ shared(msg) actor class TokenRegistry(_feeTokenId: Principal, _fee: Nat) = this 
         userTokenNumEntries := [];
     };
 
-    public shared(msg) func createToken(name: Text, symbol: Text, decimals: Nat, totalSupply: Nat): async Principal {
+    public shared(msg) func createToken(logo: Text, name: Text, symbol: Text, decimals: Nat, totalSupply: Nat): async Principal {
         if(numTokens >= maxNumTokens) {
             throw Error.reject("Exceeds max number of tokens");
         };
@@ -139,10 +140,11 @@ shared(msg) actor class TokenRegistry(_feeTokenId: Principal, _fee: Nat) = this 
         assert(await feeToken.transferFrom(msg.caller, Principal.fromActor(this), fee));
         // create token canister
         Cycles.add(cyclesPerToken);
-        let token = await Token.Token(name, symbol, decimals, totalSupply, msg.caller);
+        let token = await Token.Token(logo, name, symbol, decimals, totalSupply, msg.caller);
         let cid = Principal.fromActor(token);
         let info: TokenInfo = {
             index = numTokens;
+            logo = logo;
             name = name;
             symbol = symbol;
             decimals = decimals;
