@@ -26,6 +26,8 @@ shared(msg) actor class TokenRegistry(_feeTokenId: Principal, _fee: Nat) = this 
         symbol: Text;
         decimals: Nat;
         totalSupply: Nat;
+        mintable: Bool;
+        burnable: Bool;
         owner: Principal;
         canisterId: Principal;
         timestamp: Int;
@@ -121,7 +123,15 @@ shared(msg) actor class TokenRegistry(_feeTokenId: Principal, _fee: Nat) = this 
         userTokenNumEntries := [];
     };
 
-    public shared(msg) func createToken(logo: Text, name: Text, symbol: Text, decimals: Nat, totalSupply: Nat): async Principal {
+    public shared(msg) func createToken(
+        logo: Text, 
+        name: Text, 
+        symbol: Text, 
+        decimals: Nat, 
+        totalSupply: Nat,
+        mintable: Bool,
+        burnable: Bool
+        ): async Principal {
         if(numTokens >= maxNumTokens) {
             throw Error.reject("Exceeds max number of tokens");
         };
@@ -140,7 +150,7 @@ shared(msg) actor class TokenRegistry(_feeTokenId: Principal, _fee: Nat) = this 
         assert(await feeToken.transferFrom(msg.caller, Principal.fromActor(this), fee));
         // create token canister
         Cycles.add(cyclesPerToken);
-        let token = await Token.Token(logo, name, symbol, decimals, totalSupply, msg.caller);
+        let token = await Token.Token(logo, name, symbol, decimals, totalSupply, msg.caller, mintable, burnable);
         let cid = Principal.fromActor(token);
         let info: TokenInfo = {
             index = numTokens;
@@ -149,6 +159,8 @@ shared(msg) actor class TokenRegistry(_feeTokenId: Principal, _fee: Nat) = this 
             symbol = symbol;
             decimals = decimals;
             totalSupply = totalSupply;
+            mintable = mintable;
+            burnable = burnable;
             owner = msg.caller;
             canisterId = cid;
             timestamp = Time.now();
@@ -309,6 +321,3 @@ shared(msg) actor class TokenRegistry(_feeTokenId: Principal, _fee: Nat) = this 
         tokens.get(cid)
     };
 };
-
-
-//  dfx canister --network ic call registry modifyTokenInfo 'record { decimals = 8 : nat; owner = principal "4qehi-lqyo6-afz4c-hwqwo-lubfi-4evgk-5vrn5-rldx2-lheha-xs7a4-gae"; name = "Wrapped ICP(Test)"; totalSupply = 10_000_000_000_000_000 : nat; index = 0 : nat; symbol = "WICPT"; canisterId = principal "lx4mp-oyaaa-aaaah-qae3a-cai"; timestamp = 1_627_029_924_796_926_736 : int;}'
