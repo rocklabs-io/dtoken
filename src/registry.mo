@@ -174,7 +174,7 @@ shared(msg) actor class TokenRegistry(_feeTokenId: Principal, _fee: Nat) = this 
     public shared(msg) func setController(canisterId: Principal): async Bool {
         switch(tokens.get(canisterId)) {
             case(?info) {
-                assert(msg.caller == info.owner);
+                assert(msg.caller == info.owner or msg.caller == owner);
                 let controllers: ?[Principal] = ?[msg.caller, Principal.fromActor(this)];
                 let settings: CanisterSettings = {
                     controllers = controllers;
