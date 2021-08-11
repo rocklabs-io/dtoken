@@ -294,6 +294,20 @@ shared(msg) actor class TokenRegistry(_feeTokenId: Principal, _fee: Nat) = this 
         tokenList
     };
 
+    // for paging
+    public query func getTokens(start: Nat, num: Nat): async [TokenInfo] {
+        var tokenList: [TokenInfo] = [];
+        label l for((id, token) in tokens.entries()) {
+            if(token.index >= start and token.index < start + num) {
+                tokenList := Array.append<TokenInfo>(tokenList, [token]);
+            };
+            if(token.index >= start + num) {
+                break l;
+            };
+        };
+        tokenList
+    };
+
     public query func getUserTokenList(user: Principal): async [TokenInfo] {
         var tokenList: [TokenInfo] = [];
         for((index, token) in tokens.entries()) {
