@@ -15,6 +15,7 @@ import Error "mo:base/Error";
 import Principal "mo:base/Principal";
 import Iter "mo:base/Iter";
 import Time "mo:base/Time";
+import Text "mo:base/Text";
 import Cycles = "mo:base/ExperimentalCycles";
 import Token "./ic-token/motoko/erc20-simple-storage/src/token";
 
@@ -313,6 +314,17 @@ shared(msg) actor class TokenRegistry(_feeTokenId: Principal, _fee: Nat) = this 
             tokenList := Array.append<TokenInfo>(tokenList, [sorted[i].1]);
         };
         tokenList
+    };
+
+    public query func getTokensByName(t: Text) : async ([TokenInfo], Nat) {
+        var tokenList: [TokenInfo] = [];
+        let p : Text.Pattern = #text t;
+        for ((id, token) in tokens.entries()) {
+            if (Text.contains(token.name, p) or Text.contains(token.symbol, p)) {
+                tokenList := Array.append(tokenList, [token]);
+            };
+        };
+        (tokenList, tokenList.size())
     };
 
     public query func getUserTokenList(user: Principal): async [TokenInfo] {
