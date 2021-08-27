@@ -9,6 +9,7 @@
 import HashMap "mo:base/HashMap";
 import Array "mo:base/Array";
 import Nat "mo:base/Nat";
+import Order "mo:base/Order";
 import Hash "mo:base/Hash";
 import Error "mo:base/Error";
 import Principal "mo:base/Principal";
@@ -303,13 +304,13 @@ shared(msg) actor class TokenRegistry(_feeTokenId: Principal, _fee: Nat) = this 
     // for paging
     public query func getTokens(start: Nat, num: Nat): async [TokenInfo] {
         var tokenList: [TokenInfo] = [];
-        label l for((id, token) in tokens.entries()) {
-            if(token.index >= start and token.index < start + num) {
-                tokenList := Array.append<TokenInfo>(tokenList, [token]);
-            };
-            if(token.index >= start + num) {
-                break l;
-            };
+        func order (a: (Principal, TokenInfo), b: (Principal, TokenInfo)): Order.Order {
+            return Nat.compare(a.1.index, b.1.index);
+        };
+        let temp = Iter.toArray(tokens.entries());
+        let sorted = Array.sort(temp, order);
+        for(i in Iter.range(0, num-1)) {
+            tokenList := Array.append<TokenInfo>(tokenList, [sorted[i].1]);
         };
         tokenList
     };
