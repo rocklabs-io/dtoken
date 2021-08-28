@@ -310,7 +310,12 @@ shared(msg) actor class TokenRegistry(_feeTokenId: Principal, _fee: Nat) = this 
         };
         let temp = Iter.toArray(tokens.entries());
         let sorted = Array.sort(temp, order);
-        for (i in Iter.range(0, num-1)) {
+        let limit: Nat = if(start + num > sorted.size()) {
+            sorted.size() - start
+        } else {
+            num
+        };
+        for (i in Iter.range(0, limit-1)) {
             tokenList := Array.append<TokenInfo>(tokenList, [sorted[i+start].1]);
         };
         tokenList
