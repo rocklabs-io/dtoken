@@ -303,7 +303,7 @@ shared(msg) actor class TokenRegistry(_feeTokenId: Principal, _fee: Nat) = this 
     };
 
     // for paging
-    public query func getTokens(start: Nat, num: Nat): async [TokenInfo] {
+    public query func getTokens(start: Nat, num: Nat): async ([TokenInfo], Nat) {
         var tokenList: [TokenInfo] = [];
         func order (a: (Principal, TokenInfo), b: (Principal, TokenInfo)): Order.Order {
             return Nat.compare(a.1.index, b.1.index);
@@ -318,7 +318,7 @@ shared(msg) actor class TokenRegistry(_feeTokenId: Principal, _fee: Nat) = this 
         for (i in Iter.range(0, limit-1)) {
             tokenList := Array.append<TokenInfo>(tokenList, [sorted[i+start].1]);
         };
-        tokenList
+        (tokenList, tokenList.size())
     };
 
     public query func getTokensByName(t: Text, start: Nat, num: Nat) : async ([TokenInfo], Nat) {
@@ -330,7 +330,12 @@ shared(msg) actor class TokenRegistry(_feeTokenId: Principal, _fee: Nat) = this 
             };
         };
         var tokenList: [TokenInfo] = [];
-        for (i in Iter.range(0, num-1)) {
+        let limit: Nat = if(start + num > temp.size()) {
+            temp.size() - start
+        } else {
+            num
+        };
+        for (i in Iter.range(0, limit-1)) {
             tokenList := Array.append<TokenInfo>(tokenList, [temp[start+i]])
         };
         (tokenList, tokenList.size())
