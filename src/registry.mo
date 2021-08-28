@@ -318,7 +318,7 @@ shared(msg) actor class TokenRegistry(_feeTokenId: Principal, _fee: Nat) = this 
         for (i in Iter.range(0, limit-1)) {
             tokenList := Array.append<TokenInfo>(tokenList, [sorted[i+start].1]);
         };
-        (tokenList, tokenList.size())
+        (tokenList, sorted.size())
     };
 
     public query func getTokensByName(t: Text, start: Nat, num: Nat) : async ([TokenInfo], Nat) {
@@ -338,7 +338,7 @@ shared(msg) actor class TokenRegistry(_feeTokenId: Principal, _fee: Nat) = this 
         for (i in Iter.range(0, limit-1)) {
             tokenList := Array.append<TokenInfo>(tokenList, [temp[start+i]])
         };
-        (tokenList, tokenList.size())
+        (tokenList, temp.size())
     };
 
     public query func getUserTokenList(user: Principal): async [TokenInfo] {
