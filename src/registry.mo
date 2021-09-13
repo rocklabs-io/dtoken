@@ -17,7 +17,7 @@ import Iter "mo:base/Iter";
 import Time "mo:base/Time";
 import Text "mo:base/Text";
 import Cycles = "mo:base/ExperimentalCycles";
-import Token "./ic-token/motoko/erc20-simple-storage/src/token";
+import Token "./ic-token/motoko/src/token";
 
 shared(msg) actor class TokenRegistry(_feeTokenId: Principal, _fee: Nat) = this {
     
@@ -26,7 +26,7 @@ shared(msg) actor class TokenRegistry(_feeTokenId: Principal, _fee: Nat) = this 
         logo: Text;
         name: Text;
         symbol: Text;
-        decimals: Nat;
+        decimals: Nat8;
         totalSupply: Nat;
         mintable: Bool;
         burnable: Bool;
@@ -129,7 +129,7 @@ shared(msg) actor class TokenRegistry(_feeTokenId: Principal, _fee: Nat) = this 
         logo: Text, 
         name: Text, 
         symbol: Text, 
-        decimals: Nat, 
+        decimals: Nat8, 
         totalSupply: Nat,
         mintable: Bool,
         burnable: Bool
