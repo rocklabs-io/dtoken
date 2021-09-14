@@ -16,11 +16,41 @@ import Principal "mo:base/Principal";
 import Iter "mo:base/Iter";
 import Time "mo:base/Time";
 import Text "mo:base/Text";
+import Result "mo:base/Result";
 import Cycles = "mo:base/ExperimentalCycles";
 import Token "./ic-token/motoko/src/token";
 
 shared(msg) actor class TokenRegistry(_feeTokenId: Principal, _fee: Nat) = this {
-    
+    type TxReceipt = Result.Result<Nat, {
+        #InsufficientBalance;
+        #InsufficientAllowance;
+    }>;
+    type Metadata = {
+        logo : Text;
+        name : Text;
+        symbol : Text;
+        decimals : Nat8;
+        totalSupply : Nat;
+        owner : Principal;
+        fee : Nat;
+    };
+    public type Operation = {
+        #mint;
+        #burn;
+        #transfer;
+        #transferFrom;
+        #approve;
+    };
+    public type TxRecord = {
+        caller: ?Principal;
+        op: Operation;
+        index: Nat;
+        from: Principal;
+        to: Principal;
+        amount: Nat;
+        fee: Nat;
+        timestamp: Time.Time;
+    };
     public type TokenInfo = {
         index: Nat;
         logo: Text;
@@ -28,22 +58,23 @@ shared(msg) actor class TokenRegistry(_feeTokenId: Principal, _fee: Nat) = this 
         symbol: Text;
         decimals: Nat8;
         totalSupply: Nat;
-        mintable: Bool;
-        burnable: Bool;
         owner: Principal;
+        fee: Nat;
         canisterId: Principal;
         timestamp: Int;
     };
     public type TokenActor = actor {
         allowance: shared (owner: Principal, spender: Principal) -> async Nat;
-        approve: shared (spender: Principal, value: Nat) -> async Bool;
+        approve: shared (spender: Principal, value: Nat) -> async TxReceipt;
         balanceOf: (owner: Principal) -> async Nat;
         decimals: () -> async Nat;
         name: () -> async Text;
         symbol: () -> async Text;
         totalSupply: () -> async Nat;
-        transfer: shared (to: Principal, value: Nat) -> async Bool;
-        transferFrom: shared (from: Principal, to: Principal, value: Nat) -> async Bool;
+        getMetadata: () -> async Metadata;
+        getTransaction: (index: Nat) -> async TxRecord;
+        transfer: shared (to: Principal, value: Nat) -> async TxReceipt;
+        transferFrom: shared (from: Principal, to: Principal, value: Nat) -> async TxReceipt;
     };
     private stable var _owner: Principal = msg.caller;
     private stable var numTokens: Nat = 0;
@@ -131,8 +162,7 @@ shared(msg) actor class TokenRegistry(_feeTokenId: Principal, _fee: Nat) = this 
         symbol: Text, 
         decimals: Nat8, 
         totalSupply: Nat,
-        mintable: Bool,
-        burnable: Bool
+        fee: Nat
         ): async Principal {
         if(numTokens >= maxNumTokens) {
             throw Error.reject("Exceeds max number of tokens");
@@ -149,10 +179,15 @@ shared(msg) actor class TokenRegistry(_feeTokenId: Principal, _fee: Nat) = this 
         };
         // charge fee
         let feeToken: TokenActor = actor(Principal.toText(feeTokenId));
-        assert(await feeToken.transferFrom(msg.caller, Principal.fromActor(this), fee));
+        switch(await feeToken.transferFrom(msg.caller, Principal.fromActor(this), fee)) {
+            case(#ok(txid)) {};
+            case(#err(e)) { 
+                throw Error.reject("fee transfer failed");
+            };
+        };
         // create token canister
         Cycles.add(cyclesPerToken);
-        let token = await Token.Token(logo, name, symbol, decimals, totalSupply, msg.caller, mintable, burnable);
+        let token = await Token.Token(logo, name, symbol, decimals, totalSupply, msg.caller, fee);
         let cid = Principal.fromActor(token);
         let info: TokenInfo = {
             index = numTokens;
@@ -161,9 +196,8 @@ shared(msg) actor class TokenRegistry(_feeTokenId: Principal, _fee: Nat) = this 
             symbol = symbol;
             decimals = decimals;
             totalSupply = totalSupply;
-            mintable = mintable;
-            burnable = burnable;
             owner = msg.caller;
+            fee = fee;
             canisterId = cid;
             timestamp = Time.now();
         };
@@ -208,7 +242,7 @@ shared(msg) actor class TokenRegistry(_feeTokenId: Principal, _fee: Nat) = this 
         }
     };
 
-    public shared(msg) func claimFee(): async Bool {
+    public shared(msg) func claimFee(): async TxReceipt {
         assert(msg.caller == _owner);
         let feeToken: TokenActor = actor(Principal.toText(feeTokenId));
         let balance: Nat = await feeToken.balanceOf(Principal.fromActor(this));
@@ -224,6 +258,27 @@ shared(msg) actor class TokenRegistry(_feeTokenId: Principal, _fee: Nat) = this 
     public shared(msg) func modifyTokenInfo(info: TokenInfo): async Bool {
         assert(msg.caller == _owner);
         tokens.put(info.canisterId, info);
+        return true;
+    };
+
+    public shared(msg) func addToken(tid: Principal): async Bool {
+        let token: TokenActor = actor(Principal.toText(tid));
+        let metadata: Metadata = await token.getMetadata();
+        let tx: TxRecord = await token.getTransaction(0);
+        let info: TokenInfo = {
+            index = numTokens;
+            logo = metadata.logo;
+            name = metadata.name;
+            symbol = metadata.symbol;
+            decimals = metadata.decimals;
+            totalSupply = metadata.totalSupply;
+            owner = metadata.owner;
+            fee = metadata.fee;
+            canisterId = tid;
+            timestamp = tx.timestamp;
+        };
+        tokens.put(tid, info);
+        numTokens += 1;
         return true;
     };
 
@@ -350,19 +405,6 @@ shared(msg) actor class TokenRegistry(_feeTokenId: Principal, _fee: Nat) = this 
         };
         tokenList
     };
-
-    // public query func getTokenCID(id: Nat): async ?Principal {
-    //     switch(tokens.get(id)) {
-    //         case(?info) {
-    //             info.canisterId
-    //         };
-    //         case(_) { null };
-    //     }
-    // };
-
-    // public query func getTokenInfoById(id: Nat): async ?TokenInfo {
-    //     tokens.get(id)
-    // };
 
     public query func getTokenInfo(cid: Principal): async ?TokenInfo {
         tokens.get(cid)
