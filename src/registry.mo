@@ -20,7 +20,7 @@ import Result "mo:base/Result";
 import Cycles = "mo:base/ExperimentalCycles";
 import Token "./ic-token/motoko/src/token";
 
-shared(msg) actor class TokenRegistry(_feeTokenId: Principal, _fee: Nat) = this {
+shared(msg) actor class TokenRegistry(owner: Principal, _feeTokenId: Principal, _fee: Nat) = this {
     type TxReceipt = Result.Result<Nat, {
         #InsufficientBalance;
         #InsufficientAllowance;
@@ -76,7 +76,7 @@ shared(msg) actor class TokenRegistry(_feeTokenId: Principal, _fee: Nat) = this 
         transfer: shared (to: Principal, value: Nat) -> async TxReceipt;
         transferFrom: shared (from: Principal, to: Principal, value: Nat) -> async TxReceipt;
     };
-    private stable var _owner: Principal = msg.caller;
+    private stable var _owner: Principal = owner;
     private stable var numTokens: Nat = 0;
     private stable var cyclesPerToken: Nat = 2000000000000; // 2 trillion cycles for each token canister
     private stable var maxNumTokens: Nat = 100;
